@@ -2,11 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 
-class MyError(Exception):
-    def __init__(self, message=None):
-        super().__init__(message)
-
-
 class DataProcessor(ABC):
     def __init__(self, data: Any):
         self._storage = data
@@ -47,7 +42,7 @@ class NumericProcessor(DataProcessor):
             else:
                 self._storage.append(str(data))
         else:
-            raise MyError()
+            raise TypeError()
 
 
 class TextProcessor(DataProcessor):
@@ -61,10 +56,13 @@ class TextProcessor(DataProcessor):
 
     def ingest(self, data: Any) -> None:
         if self.validate(data):
-            for item in data:
-                self._storage.append(item)
+            if isinstance(data, list):
+                for i in data:
+                    self._storage.append(i)
+            else:
+                self._storage.append(data)
         else:
-            raise MyError()
+            raise TypeError()
 
 
 class LogProcessor(DataProcessor):
