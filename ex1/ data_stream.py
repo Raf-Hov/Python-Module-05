@@ -6,6 +6,7 @@ class DataProcessor(ABC):
     def __init__(self):
         self._storage: list = []
         self._rank = 0
+        self.total_atribut = 0
 
     @abstractmethod
     def validate(self, data: Any) -> bool:
@@ -104,6 +105,37 @@ class LogProcessor(DataProcessor):
             raise TypeError("Improper log data")
 
 
+class DataStream:
+    def __init__(self):
+        self.my_list: list[DataProcessor] = []
+
+    def register_processor(self, proc: DataProcessor) -> None:
+        self.my_list.append(proc)
+
+    def process_stream(self, stream: list[Any]) -> None:
+        for item in stream:
+            processed = False
+            for proc in self.processors:
+                if proc.validate(item):
+                    proc.ingest(item)
+                    processed = True
+                    break
+            if not processed:
+                print("DataStream error - Can't", end=" ")
+                print(f"process element in stream: {stream}")
+
+    def print_processors_stats(self) -> None:
+        if not self.my_list:
+            print("No processor found, no data")
+        for proc in self.my_list:
+            po = proc.__class__.__name__
+            name = po.replace("Processor", " Processor")
+            total = proc._rank
+            remaining = len(proc._storage)
+            print(f"{name}: total {total} items processed, ", end="")
+            print(f"remaining {remaining} on processor")
+
+
 if __name__ == "__main__":
     print("=== Code Nexus - Data Processor ===\n")
     log1 = NumericProcessor()
@@ -156,3 +188,5 @@ if __name__ == "__main__":
     for i in range(2):
         rank, value = log3.output()
         print(f" Log entry {rank}: {value}")
+
+    print("\nInitialize Data Stream...")
