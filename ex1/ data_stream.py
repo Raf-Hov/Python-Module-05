@@ -107,86 +107,42 @@ class LogProcessor(DataProcessor):
 
 class DataStream:
     def __init__(self):
-        self.my_list: list[DataProcessor] = []
+        self.proc_list: list[DataProcessor] = []
 
     def register_processor(self, proc: DataProcessor) -> None:
-        self.my_list.append(proc)
+        self.proc_list.append(proc)
 
     def process_stream(self, stream: list[Any]) -> None:
         for item in stream:
-            processed = False
-            for proc in self.processors:
-                if proc.validate(item):
-                    proc.ingest(item)
-                    processed = True
+            booled = False
+            for i in self.proc_list:
+                if i.validate(item):
+                    i.ingest(item)
+                    booled = True
                     break
-            if not processed:
+            if not booled:
                 print("DataStream error - Can't", end=" ")
                 print(f"process element in stream: {stream}")
 
-    def print_processors_stats(self) -> None:
-        if not self.my_list:
-            print("No processor found, no data")
-        for proc in self.my_list:
-            po = proc.__class__.__name__
-            name = po.replace("Processor", " Processor")
-            total = proc._rank
-            remaining = len(proc._storage)
-            print(f"{name}: total {total} items processed, ", end="")
-            print(f"remaining {remaining} on processor")
-
 
 if __name__ == "__main__":
-    print("=== Code Nexus - Data Processor ===\n")
     log1 = NumericProcessor()
     log2 = TextProcessor()
     log3 = LogProcessor()
-    k = "Hello"
-
-    print("Tumeric Processor...")
-    print(f" Trying to validate input '42': {log1.validate(42)}")
-    print(" Trying to validate input ", end="")
-    print(f" '{k}': {log1.validate(k)}")
-    try:
-        print(" Test invalid ingestion of string", end=" ")
-        print("'foo' without prior validation:")
-        log1.ingest("foo")
-    except TypeError as e:
-        print(f" Got exception: {e}")
-    my_list = [1, 2, 3, 4, 5]
-    print(f" Processing data: {my_list}")
-    log1.ingest(my_list)
-    k = log1
-    print(" Extracting 3 values...")
-    for i in range(3):
-        rank, value = log1.output()
-        print(f" Numeric value {rank}: {value}")
-
-    print("\nTesting Text Processor...")
-    print(f" Trying to validate input '42': {log2.validate(42)}")
-    my_list = ['Hello', 'Nexus', 'World']
-    print(f" Processing data: {my_list}")
-    print(" Extracting 1 value...")
-    try:
-        log2.ingest(my_list)
-    except TypeError as e:
-        print(f" Got exception: {e}")
-    for i in range(1):
-        rank, value = log2.output()
-        print(f" Text value {rank}: {value}")
-
-    print("\nTesting Log Processor...")
-    print(f" Trying to validate input 'Hello': {log3.validate(k)}")
-    my_dict = [{'log_level': 'NOTICE', 'log_message': 'Connection to server'},
-               {'log_level': 'ERROR', 'log_message': 'Unauthorized access!!'}]
-    print(f" Processing data: {my_dict}")
-    print(" Extracting 2 values...")
-    try:
-        log3.ingest(my_dict)
-    except TypeError as e:
-        print(f" Got exception: {e}")
-    for i in range(2):
-        rank, value = log3.output()
-        print(f" Log entry {rank}: {value}")
-
-    print("\nInitialize Data Stream...")
+    datast = DataStream()
+    datast.process_stream(log1)
+    datast.process_stream(log2)
+    datast.process_stream(log3)
+    stream = [
+            'Hello world',
+            [3.14, -1, 2.71],
+            [
+                {'log_level': 'WARNING',
+                 'log_message': 'Telnet access! Use ssh instead'},
+                {'log_level': 'INFO',
+                 'log_message': 'User wil isconnected'}
+            ],
+            42,
+            ['Hi', 'five']
+            ]
+    datast.register_processor(stream)
